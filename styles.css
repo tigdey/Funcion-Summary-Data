@@ -1,0 +1,191 @@
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
+
+:root {
+    --white: #FFFCE5;
+    --darkblue: #141482;
+    --blue: #4242cb;
+    --skyblue: #1583dd;
+    --darkpurple: #461051;
+    --purple: #9c3ddc;
+    --green: #26eb4d;
+    --black: #000000;
+    --shadow: 0 10px 30px #00000059;
+    --transp: #00000000;
+}
+
+body {
+    font-family: 'Google Sans';
+    color: var(--black);
+}
+
+/* navegación */
+.navbar {
+    background: linear-gradient(135deg,
+        var(--darkblue) 0%,
+        var(--blue) 40%,
+        var(--purple) 75%,
+        var(--darkpurple) 100%
+    ) !important;
+}
+
+.navbar-title {
+    font-size: 2.5rem !important;
+    font-weight: bold !important;
+    color: var(--white);
+    letter-spacing: 1px;
+    font-family: 'Orbitron', sans-serif !important;
+}
+
+.navbar-nav {
+    gap: 0.8rem;
+}
+
+.navbar-nav .nav-link {
+    font-family: 'Orbitron';
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.25) !important;
+    transition: all 0.3s ease;
+    padding-left: 20px;    /* ← espacio horizontal */
+    padding-right: 20px;   
+}
+
+.navbar-nav .nav-link.active,
+.navbar-nav .nav-link:hover {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.15) !important; 
+    border-radius: 8px;
+    font-size: 1.08rem;          
+    transform: scale(1.08);  
+    padding-left: 20px;    
+    padding-left: 20px;
+}
+
+/* tabs */
+.nav-tabs .nav-link {
+    font-family: 'Orbitron';
+    color: var(--darkpurple);
+    border: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--purple) !important;
+    border-bottom: 3px solid var(--purple) !important;
+}
+
+/* Presentación */
+.hero {
+    background: #001f24; /* fondo oscuro */
+    padding: 80px 40px;
+    border-radius: 10px;
+}
+
+.hero-title {
+    font-size: 4rem;
+    font-weight: 800;
+    color: #e6e6e6;
+    margin-bottom: 20px;
+    font-family: Orbitron;
+}
+
+.hero-subtitle {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #e6e6e6;
+}
+
+.highlight {
+    color: #00ff00;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.hero-footer {
+    margin-top: 80px;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: plum;
+}
+
+/* tarjetas */
+/* Tarjetas de integrantes */
+.team-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); 
+    gap: 25px;
+    padding: 2rem 0;
+    max-width: 1200px; 
+    margin: 0 auto;
+}
+
+.team-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    padding: 2.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: transform 0.3s;
+}
+
+.team-card.mecatronica { background: #c0bbfb; }
+.team-card.datos       { background: #a6ccef; }
+.team-card.sistemas    { background: #9cf7d7; }
+
+.team-card:hover {
+    transform: translateY(-5px);
+}
+
+.team-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.team-icon.mecatronica { background: #EEEDFE; }
+.team-icon.datos       { background: #E6F1FB; }
+.team-icon.sistemas    { background: #E1F5EE; }
+
+.team-name {
+    font-weight: 600;
+    font-size: 22px;
+    margin: 0;
+    text-align: center;
+}
+
+.team-career {
+    font-size: 16px;
+    color: #888;
+    margin: 0;
+    text-align: center;
+}
+
+/* texto normal */
+.normal{
+    padding: 40px 40px;
+    border-radius: 10px;
+}
+
+.normal-title{
+    font-size: 30px;
+    color: #888;
+    font-weight: 500;
+}
+
+.normal-title2{
+    font-size: 30px;
+    color: var(--purple);
+    font-weight: 600;
+}
+
+.normal a{
+    color: var(--blue);
+    font-weight: bolder;
+}
+

@@ -1,0 +1,1426 @@
+---
+title: "AVANCE 2"
+format: 
+    dashboard:
+        self-contained: true
+        css: styles.css
+---
+```{python}
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+from IPython.display import display
+import pickle, os
+
+df = pd.read_csv("Casos_positivos_de_COVID-19_en_Colombia._20260227.csv", sep=(","), nrows= 10000)
+
+
+df["Código ISO del país"] = df["Código ISO del país"].astype(float)
+df["ID de caso"] = df["ID de caso"].str.replace(",", "").astype(float)
+df["Código DIVIPOLA departamento"] = df["Código DIVIPOLA departamento"].str.replace(",", "").astype(float)
+df["Código DIVIPOLA municipio"] = df["Código DIVIPOLA municipio"].str.replace(",", "").astype(float)
+```
+```{python}
+from datetime import datetime
+df["fecha reporte web"] = pd.to_datetime(df["fecha reporte web"])
+df["ID de caso"] = df["ID de caso"].astype(int)
+df["Fecha de notificación"] = pd.to_datetime(df["Fecha de notificación"])
+df["Código DIVIPOLA departamento"] = df["Código DIVIPOLA departamento"].astype(int)
+df["Nombre departamento"] = df["Nombre departamento"].astype(object)
+df["Código DIVIPOLA municipio"] = df["Código DIVIPOLA municipio"].astype(int)
+df["Nombre municipio"] = df["Nombre municipio"].astype(object)
+df["Sexo"] = df["Sexo"].astype(object)
+df["Ubicación del caso"] = df["Ubicación del caso"].astype(object)
+df["Tipo de contagio"] = df["Tipo de contagio"].astype(object)
+df["Estado"] = df["Estado"].astype(object)
+df["Código ISO del país"] = df["Código ISO del país"].astype(float)
+df["Nombre del país"] = df["Nombre del país"].astype(object)
+df["Recuperado"] = df["Recuperado"].astype(object)
+df["Fecha de inicio de síntomas"] = pd.to_datetime(df["Fecha de inicio de síntomas"])
+df["Fecha de muerte"] = pd.to_datetime(df["Fecha de muerte"])
+df["Fecha de diagnóstico"] = pd.to_datetime(df["Fecha de diagnóstico"])
+df["Fecha de recuperación"] = pd.to_datetime(df["Fecha de recuperación"])
+df["Tipo de recuperación"] = df["Tipo de recuperación"].astype(object)
+df["Nombre del grupo étnico"] = df["Nombre del grupo étnico"].astype(object)
+
+
+```
+
+
+```{python}
+def contar_duplicados_por_columna(df):
+    resultados = []
+    for col in df.columns:
+        conteos = {}
+        for valor in df[col].to_numpy():
+            if valor in conteos:
+                conteos[valor] += 1
+            else:
+                conteos[valor] = 1
+        for valor, conteo in conteos.items():
+            if conteo > 1:
+                resultados.append({"columna": col, "valor": valor, "conteo": conteo})
+    return resultados
+
+CACHE = "cache_dashboard.pkl"
+
+if os.path.exists(CACHE):
+    with open(CACHE, "rb") as f:
+        cache = pickle.load(f)
+else:
+    cache = {}
+    cache["duplicados"] = contar_duplicados_por_columna(df)
+    # Faltantes también al caché (elimina el loop lento de "Funcion 2")
+    cache["faltantes"] = {col: round(df[col].isna().sum() / len(df[col]) * 100, 2) 
+                          for col in df.columns}
+    with open(CACHE, "wb") as f:
+        pickle.dump(cache, f)
+```
+
+# Introducción
+
+:::{.panel-tabset}
+## Presentación
+<div class="hero">
+
+<p class="hero-title">Proyecto de ingeniería:</p>
+
+<p class="hero-subtitle">
+Función <span class="highlight">Summary_Data</span>
+</p>
+
+<p class="hero-footer">Presentado a Jorge Luis Villalba</p>
+
+</div>
+
+## Integrantes
+
+```{=html}
+<div class="team-grid">
+
+  <div class="team-card">
+    <div class="team-icon mecatronica">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#534AB7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/><circle cx="12" cy="12" r="2"/><path d="M12 8v1M12 15v1M8 12h1M15 12h1"/></svg>
+    </div>
+    <p class="team-name">Emmanuel Ascendra</p>
+    <p class="team-career">Ing. Mecatrónica</p>
+  </div>
+
+  <div class="team-card">
+    <div class="team-icon mecatronica">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#534AB7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/><circle cx="12" cy="12" r="2"/><path d="M12 8v1M12 15v1M8 12h1M15 12h1"/></svg>
+    </div>
+    <p class="team-name">Dawin Jiménez Pombo</p>
+    <p class="team-career">Ing. Mecatrónica</p>
+  </div>
+
+  <div class="team-card">
+    <div class="team-icon datos">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><polyline points="6 8 10 12 14 8 18 12"/></svg>
+    </div>
+    <p class="team-name">Danzel Washington</p>
+    <p class="team-career">Ciencia de Datos</p>
+  </div>
+
+  <div class="team-card">
+    <div class="team-icon sistemas">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+    </div> <p class="team-name">Sebastián García</p>
+    <p class="team-career">Ing. de Sistemas</p>
+  </div>
+
+  <div class="team-card">
+    <div class="team-icon sistemas">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+    </div>
+    <p class="team-name">Isabel Sofía Páez</p>
+    <p class="team-career">Ing. de Sistemas</p>
+  </div>
+
+</div>
+```
+
+## Dataset
+<div class="normal">
+El Dataset utilizado en este proyecto <a href="https://www.datos.gov.co/Salud-y-Protecci-n-Social/Casos-positivos-de-COVID-19-en-Colombia-/gt2j-8ykr/about_data">Casos positivos de COVID-19 en Colombia</a> es un conjunto de datos que contiene el registro oficial de todos los casos confirmados de COVID-19 en el país desde el inicio de la pandemia desde el 27 de marzo del 2020 hasta su ultima actualización el 19 de diciembre de 2025.
+
+Toda esta información reposa en la Base de Datos abierta de el Instituto Nacional de Salud 'INS' de Colombia (Entidad gubernamental) 
+
+<div class = "normal-title">
+Variables del dataset
+</div>
+</div>
+```{python}
+info_df = pd.DataFrame({
+    "Columna": df.columns,
+    "Tipo": df.dtypes.values,
+    "No Nulos": df.notnull().sum().values,
+    "Nulos": df.isnull().sum().values
+})
+display(info_df)
+```
+
+## Estado actual 
+<div class="normal"> Por el momento, el estado actuall de la funión summary data es:
+</div>
+
+::: {.presentacion-container style="min-height: auto; padding: 40px;"}
+
+```{python}
+#| echo: true
+def summary_data(
+        df,
+        metric: "list | str" = ["mean", "mode", "median", "std", "var", "min", "max", "quantiles", "count", "NaN"],
+        return_str: bool = True,
+        return_metrics: bool = False,
+        decimals: int = 2,
+):
+    # Variables numericas y categoricas
+    columnas = df.columns
+    ## Filas y columnas
+    n_columnas = df.shape[1]
+    n_filas = df.shape[0]
+    ## Diccionario de Metricas
+    dic_metricas = {}
+
+    ## Intentar transformar categoricas a numericas si es el caso
+    for col in columnas:
+        if df[col].dtype == "object":
+            try:
+                df[col] = df[col].astype("float64")
+            except:
+                pass
+
+    numericas = df.select_dtypes(include=["number"]).columns
+    categoricas = df.select_dtypes(include=["object"]).columns
+
+    # Media
+    if "mean" in metric:
+        mean_variables = []
+
+        for col in numericas:
+
+            ## Media por columna
+            mean = float(round(df[col].sum() / len(df[col]), decimals))
+
+            mean_variables.append((col, mean))
+
+        dic_metricas["mean"] = mean_variables
+    
+    # Moda
+    if "mode" in metric:
+        mode_variables = []
+
+        for col in columnas:
+            if col in numericas:
+
+                ## Moda por columna
+                mode = df[col].value_counts().sort_values(ascending=False).iloc[ : min(n_columnas, n_filas)].to_dict()
+
+            else:
+                mode = df[col].mode().to_dict()
+
+            mode_variables.append((col, mode))
+
+        dic_metricas["mode"] = mode_variables
+
+    # Mediana
+    if "median" in metric:
+        median_variables = []
+        
+        for col in numericas:
+            # Sort once and drop NaNs
+            sorted_col = df[col].dropna().sort_values().reset_index(drop=True)
+            n = len(sorted_col)
+            
+            if n == 0:
+                median = 0 
+            elif n % 2 != 0:
+                median = sorted_col.iloc[n // 2]
+            else:
+                # Even: average of the two middle elements
+                low = sorted_col.iloc[(n // 2) - 1]
+                high = sorted_col.iloc[n // 2]
+                median = (low + high) / 2
+                
+            median_variables.append((col, round(float(median), decimals)))
+
+        dic_metricas["median"] = median_variables
+
+    # Varianza
+    if "var" in metric:
+        var_variables = []
+        
+        for col in numericas:
+            col_data = df[col].dropna()
+            media = col_data.mean()
+            
+            varianza = ((col_data - media) ** 2).sum() / (len(col_data) - 1)
+            
+            var_variables.append((col, float(round(varianza, decimals))))
+
+        dic_metricas["var"] = var_variables
+
+    # Desviacion Estandar
+    if "std" in metric:
+        std_variables = []
+
+        for col in numericas:
+            col_data = df[col].dropna()
+            media = col_data.mean()
+
+            desviacion = ((col_data - media) ** 2).sum() / (len(col_data) - 1)
+
+            std_variables.append((col, float(round(desviacion ** 0.5, decimals))))
+
+        dic_metricas["std"] = std_variables
+
+    # Minimo y Maximo
+    if "min" in metric:
+        min_variables = []
+
+        for col in numericas:
+            min_variables.append((col, float(round(df[col].min(), decimals))))
+
+        dic_metricas["min"] = min_variables
+
+    if "max" in metric:
+        max_variables = []
+
+        for col in numericas:
+            max_variables.append((col, float(round(df[col].max(), decimals))))
+
+        dic_metricas["max"] = max_variables
+
+    # Cuantiles
+    if "quantiles" in metric:
+        quantiles_variables = []
+
+        for col in numericas:
+            quantiles_variables.append((col, df[col].quantile([0.25, 0.5, 0.75]).to_dict()))
+
+        dic_metricas["quantiles"] = quantiles_variables
+        
+    # Conteo
+    if "count" in metric:
+        count_variables = []
+
+        for col in columnas:
+            if col in numericas:
+                count_variables.append((col, int(df[col].dropna().count())))
+            else:
+                if df[col].dropna().count() > 0:
+                    count_variables.append((col, int(df[col].dropna().count())))
+
+        dic_metricas["count"] = count_variables
+
+    if "NaN" in metric:
+        nan_variables = []
+
+        for col in columnas:
+            nan_variables.append((col, int(df[col].isna().sum())))
+
+        dic_metricas["NaN"] = nan_variables
+
+    # Formato de salida
+    if return_str:
+        print("*" * 120)
+        print("\n                   RESUMEN DEL DATASET ~ METODO DESCRIBE                              (Columnas, Filas): ({}, {})".format(n_columnas, n_filas))
+        print("*" * 120)
+        print("INFORMACION RELEVANTE:\n")
+        print(f"Columnas: {n_columnas} - Filas: {n_filas}\n")
+        print(f"Variables Numericas: {len(numericas)}")
+        for var in df[numericas].columns:
+            print(f"\t{var}: {df[var].dtype}")
+        print(f"Variables Categoricas: {len(categoricas)}")
+        for var in df[categoricas].columns:
+            print(f"\t{var}: {df[var].dtype}")
+        print("*" * 120)
+        print("\n")
+        for key in dic_metricas.keys():
+            print(f"{key}:")
+            for item in dic_metricas[key]:
+                print(f"\t{item[0]}: {item[1]}")
+        print("\n")
+        print("*"*120)
+
+    if return_metrics:
+        return dic_metricas
+
+
+summary_data(df, metric=["mean", "median", "mode", "count", "quantiles","min", "max", "NaN", "var", "std"], 
+                decimals=2, return_metrics=False, return_str=True)
+```
+
+:::
+:::
+
+# Curtosis
+
+:::{.panel-tabset}
+## ¿Que es la  curtosis?
+
+<div class="normal">
+La curtosis se refiere a la medida de la forma de una distribución en comparación con la distribución normal, también conocida como campana de Gauss. A través de esta medida, podemos descubrir si una distribución tiene colas pesadas o ligeras, así como si su pico es más pronunciado o suave.
+</div>
+
+$$
+g_2 = \frac{n(n+1)}{(n-1)(n-2)(n-3)} \sum_{i=1}^{n} \left( \frac{x_i - \bar{x}}{s} \right)^4 
+- \frac{3(n-1)^2}{(n-2)(n-3)}
+$$
+
+**Donde:**
+
+- $n$: número de datos  
+- $x_i$: cada valor de la muestra  
+- $\bar{x}$: media muestral  
+- $s$: desviación estándar muestral  
+
+**Interpretación**
+
+- $g_2 > 0$: leptocúrtica (más picuda que la normal)  
+- $g_2 < 0$: platicúrtica (más achatada que la normal)  
+- $g_2 = 0$: mesocúrtica (similar a la normal)  
+
+
+## Funciones Necesarias
+
+<div class= "normal">
+Las funciones que se usaron principalmente, son las siguientes:</div>
+
+```{python}
+import numpy as np
+
+#Funcion principal para valores bases
+# Imprime todas las columnas para verificar el nombre exacto
+print(df.columns.tolist())
+
+def basic_Info(df):
+    """
+    Summary:
+        Retrieves basic information from a DataFrame.
+
+        Extracts numeric columns, total number of columns, total number of rows,
+        and all column names.
+
+    Args:
+        df (pandas.DataFrame): Input DataFrame to analyze.
+
+    Returns:
+        tuple: (numericas, n_columnas, n_filas, columnas)
+            - numericas (Index): numeric columns
+            - n_columnas (int): total number of columns
+            - n_filas (int): total number of rows
+            - columnas (Index): all column names
+    """
+    import pandas as pd
+    numericas = df.select_dtypes(include=["number"]).columns
+    n_columnas = df.shape[1]
+    n_filas = df.shape[0]
+    columnas=df.columns
+    return numericas, n_columnas,n_filas,columnas
+
+def confSerie(serie):
+    """
+    Summary:
+        Validates and prepares a series for numerical analysis.
+
+        Ensures the series contains only numeric data and removes missing values
+        before returning it.
+
+    Args:
+        serie (pandas.Series): Input series to validate.
+
+    Returns:
+        pandas.Series: Numeric series without missing values.
+
+    Raises:
+        TypeError: If the series contains non-numeric data.
+    """
+    if isinstance(serie, np.ndarray):  # si ya es numpy, devolver directo
+        return serie
+    if not pd.api.types.is_numeric_dtype(serie):
+        raise TypeError("La serie debe contener solo valores numéricos (sin letras ni otros tipos)")
+    return serie.dropna().to_numpy()
+
+
+def count(serie):
+    """
+    Summary:
+        Counts the number of valid elements in a series.
+
+        Applies a prior validation to ensure the series is numeric and free of
+        missing values, then returns the total number of data points.
+
+    Args:
+        serie (pandas.Series): Input series to analyze.
+
+    Returns:
+        int: Number of elements in the series.
+    """
+    arr = confSerie(serie)
+    return int(len(arr)) # cambio por optimizacion
+
+def mean(serie):
+    """
+    Summary:
+        Computes the arithmetic mean of a numeric series.
+
+        Validates the series to ensure it contains only numeric values and no
+        missing data, then calculates the average by summing all elements and
+        dividing by the number of observations.
+
+    Args:
+        serie (pandas.Series): Input series to analyze.
+
+    Returns:
+        float: Arithmetic mean of the series.
+    """
+    arr = confSerie(serie)
+    n = len(arr)
+    suma = 0.0
+    for x in arr:        #cambio por optimizacion iterar directo sobre numpy es más rápido que serie[i]
+        suma += x
+    return suma / n
+    
+
+def std(serie):
+    """
+    Summary:
+        Computes the sample standard deviation of a numeric series.
+
+        Validates the series to ensure it contains only numeric values and no
+        missing data, then calculates the standard deviation using the sample
+        formula (with n-1 in the denominator).
+
+    Args:
+        serie (pandas.Series): Input series to analyze.
+
+    Returns:
+        float: Sample standard deviation of the series. Returns 0.0 if the
+        series has fewer than two elements.
+"""
+    arr = confSerie(serie)
+    n = len(arr)
+    if n < 2:
+        return 0.0
+    temp_mean = mean(serie)
+    suma = 0.0
+    for x in arr:
+        suma += (x - temp_mean) ** 2
+    return (suma / (n - 1)) ** 0.5
+    
+    
+```
+
+**confSerie(serie)**
+
+Valida y prepara una serie para análisis numérico.
+
+- Verifica que la serie contenga únicamente datos numéricos  
+- Elimina valores faltantes (`NaN`)  
+- Retorna una serie limpia y lista para procesar  
+
+
+**count(serie)**
+
+Cuenta la cantidad de elementos válidos en una serie.
+
+- Aplica validación previa con `confSerie`  
+- Calcula el número total de datos  
+- Retorna un valor entero con el conteo  
+
+
+**mean(serie)**
+
+Calcula la media aritmética de una serie.
+
+- Valida la serie antes del cálculo  
+- Suma todos los valores  
+- Divide entre el número de elementos  
+- Retorna el promedio como número decimal  
+
+
+**std(serie)**
+
+Calcula la desviación estándar muestral.
+
+- Valida la serie y obtiene la media  
+- Calcula la dispersión de los datos respecto a la media  
+- Usa la fórmula con \( n - 1 \) (muestra)  
+- Retorna la desviación estándar  
+- Si hay menos de dos datos, retorna `0.0`  
+
+## Estructura de la funcion
+
+**Funcion:**
+
+```{python}
+#| echo: true
+def kurtosis(serie):
+    """
+    Summary:
+        Computes the kurtosis (excess kurtosis) of a numeric series.
+
+        Validates the series to ensure it contains only numeric values and no
+        missing data, then calculates the bias-corrected sample kurtosis using
+        the Fisher definition (excess kurtosis).
+
+    Args:
+        serie (pandas.Series): Input series to analyze.
+
+    Returns:
+        float: Kurtosis of the series. Returns NaN if the series has fewer than
+        four elements or if the standard deviation is zero.
+    """
+    arr = confSerie(serie)
+    n = len(arr)
+    if n < 4:
+        return float('nan')
+    temp_mean = mean(arr)   # ← pasar arr, no serie
+    temp_std = std(arr)     # ← pasar arr, no serie
+    if temp_std == 0:
+        return float('nan')
+    suma = 0.0
+    for x in arr:
+        suma += ((x - temp_mean) / temp_std) ** 4
+    term1 = (n * (n + 1)) / ((n - 1) * (n - 2) * (n - 3))
+    term3 = (3 * (n - 1) ** 2) / ((n - 2) * (n - 3))
+    return (term1 * suma) - term3
+```
+**Evaluacion del error**
+
+variable analizada: EDAD
+
+```{python}
+# Comprobacion de funcion Kurtosis
+print(f"Valor funcion kurt()= {df['Edad'].kurt()}")
+print(f"Valor de nuestra funcion = {kurtosis(df['Edad'])}")
+print(f"Error absoluto = {abs(df["Edad"].kurt()-kurtosis(df['Edad']))}")
+```
+
+:::
+
+
+# Coeficiente de Asimetria
+
+:::{.panel-tabset}
+
+## ¿Que es el coeficiente de asimetria?
+<div class="normal">
+Mide el grado de asimetría de la distribución con respecto a la media. Un valor positivo de este inicador significa que la distribucion se encuentra sesgada hacia la izquierda. Un resultado megativo significa que la distribución se sesga a la derecha.
+</div>
+$$
+g_1 = \frac{n}{(n-1)(n-2)} \sum_{i=1}^{n} \left( \frac{x_i - \bar{x}}{s} \right)^3
+$$
+
+**Donde:**
+
+- $n$: número de datos  
+- $x_i$: cada valor de la muestra  
+- $\bar{x}$: media muestral  
+- $s$: desviación estándar muestral  
+
+**Interpretación**
+
+- $g_1 > 0$ sesgo a la derecha  
+- $g_1 < 0$: sesgo a la izquierda  
+- $g_1 = 0$: distribución simétrica 
+
+
+## Funciones Necesarias
+
+<div class= "normal">
+Las funciones que se usaron principalmente, son las siguientes:</div>
+
+```{python}
+import pandas as pd
+#Funcion principal para valores bases
+
+def basic_Info(df):
+    """
+    Summary:
+        Retrieves basic information from a DataFrame.
+
+        Extracts numeric columns, total number of columns, total number of rows,
+        and all column names.
+
+    Args:
+        df (pandas.DataFrame): Input DataFrame to analyze.
+
+    Returns:
+        tuple: (numericas, n_columnas, n_filas, columnas)
+            - numericas (Index): numeric columns
+            - n_columnas (int): total number of columns
+            - n_filas (int): total number of rows
+            - columnas (Index): all column names
+    """
+    import pandas as pd
+    numericas = df.select_dtypes(include=["number"]).columns
+    n_columnas = df.shape[1]
+    n_filas = df.shape[0]
+    columnas=df.columns
+    return numericas, n_columnas,n_filas,columnas
+
+def confSerie(serie):
+    """
+    Summary:
+        Validates and prepares a series for numerical analysis.
+
+        Ensures the series contains only numeric data and removes missing values
+        before returning it.
+
+    Args:
+        serie (pandas.Series): Input series to validate.
+
+    Returns:
+        pandas.Series: Numeric series without missing values.
+
+    Raises:
+        TypeError: If the series contains non-numeric data.
+    """
+    if not pd.api.types.is_numeric_dtype(serie):
+        raise TypeError("La serie debe contener solo valores numéricos (sin letras ni otros tipos)")
+    serie=serie.dropna()
+    return serie
+
+
+def count(serie):
+    """
+    Summary:
+        Counts the number of valid elements in a series.
+
+        Applies a prior validation to ensure the series is numeric and free of
+        missing values, then returns the total number of data points.
+
+    Args:
+        serie (pandas.Series): Input series to analyze.
+
+    Returns:
+        int: Number of elements in the series.
+    """
+    serie=confSerie(serie)
+    conteo=int(len(serie))
+    return conteo
+
+def mean(serie):
+    """
+    Summary:
+        Computes the arithmetic mean of a numeric series.
+
+        Validates the series to ensure it contains only numeric values and no
+        missing data, then calculates the average by summing all elements and
+        dividing by the number of observations.
+
+    Args:
+        serie (pandas.Series): Input series to analyze.
+
+    Returns:
+        float: Arithmetic mean of the series.
+    """
+    serie=confSerie(serie)
+    n= count(serie)
+    suma=0
+    for i in range(len(serie)):
+        suma+=serie[i]
+    media=float(suma/n)
+    return media
+    
+
+def std(serie):
+    """
+    Summary:
+        Computes the sample standard deviation of a numeric series.
+
+        Validates the series to ensure it contains only numeric values and no
+        missing data, then calculates the standard deviation using the sample
+        formula (with n-1 in the denominator).
+
+    Args:
+        serie (pandas.Series): Input series to analyze.
+
+    Returns:
+        float: Sample standard deviation of the series. Returns 0.0 if the
+        series has fewer than two elements.
+"""
+    serie=confSerie(serie)
+    n=count(serie)
+    temp_mean=mean(serie)
+    if n>1:
+        suma=0
+        for i in range(len(serie)):
+            suma+=(serie[i]-temp_mean)**2 
+        desviacion=float((suma/(n-1))**(1/2))
+    else:
+        desviacion = 0.0
+    return desviacion 
+    
+    
+```
+
+**confSerie(serie)**
+
+Valida y prepara una serie para análisis numérico.
+
+- Verifica que la serie contenga únicamente datos numéricos  
+- Elimina valores faltantes (`NaN`)  
+- Retorna una serie limpia y lista para procesar  
+
+
+**count(serie)**
+
+Cuenta la cantidad de elementos válidos en una serie.
+
+- Aplica validación previa con `confSerie`  
+- Calcula el número total de datos  
+- Retorna un valor entero con el conteo  
+
+
+**mean(serie)**
+
+Calcula la media aritmética de una serie.
+
+- Valida la serie antes del cálculo  
+- Suma todos los valores  
+- Divide entre el número de elementos  
+- Retorna el promedio como número decimal  
+
+
+**std(serie)**
+
+Calcula la desviación estándar muestral.
+
+- Valida la serie y obtiene la media  
+- Calcula la dispersión de los datos respecto a la media  
+- Usa la fórmula con \( n - 1 \) (muestra)  
+- Retorna la desviación estándar  
+- Si hay menos de dos datos, retorna `0.0`  
+
+## Estructura de la funcion
+
+**Funcion:**
+
+```{python}
+#| echo: true
+# funcion del Coeficiente de asimetria
+
+def coesimetria(serie):
+    """
+    Summary:
+        Computes the skewness (asymmetry coefficient) of a numeric series.
+
+        Validates the series to ensure it contains only numeric values and no
+        missing data, then calculates the bias-corrected sample skewness using
+        the Fisher-Pearson formula.
+
+    Args:
+        serie (pandas.Series): Input series to analyze.
+
+    Returns:
+        float: Skewness of the series. Returns NaN if the series has fewer than
+        three elements or if the standard deviation is zero.
+    """
+    arr = confSerie(serie)
+    n = len(arr)
+    if n < 3:
+        return float('nan')
+    temp_mean = mean(arr)   # ← pasar arr, no serie
+    temp_std = std(arr)     # ← pasar arr, no serie
+    if temp_std == 0:
+        return float('nan')
+    suma = 0.0
+    for x in arr:
+        suma += ((x - temp_mean) / temp_std) ** 3
+    return (n / ((n - 1) * (n - 2))) * suma
+```
+**Evaluacion del error**
+
+variable analizada: EDAD
+
+```{python}
+# Comprobacion de funcion Kurtosis
+print(f"Valor funcion skew()= {df['Edad'].skew()}")
+print(f"Valor de nuestra funcion = {coesimetria(df['Edad'])}")
+print(f"Error absoluto = {abs(df['Edad'].kurt()-kurtosis(df['Edad']))}")
+```
+
+:::
+
+# Limpieza de Datos
+
+## Column {width=60%}
+
+:::{.panel-tabset}
+## Descripción
+
+<div class="normal">
+1. **Iteración por columnas**: Se recorre cada columna del DataFrame accediendo a sus valores de forma posicional, sin depender de métodos de pandas para detección de duplicados.
+
+2. **Conteo manual**: Por cada columna se construye un diccionario que acumula cuántas veces aparece cada valor, recorriendo fila por fila con `iloc`.
+
+3. **Reporte**: Se filtran los valores con conteo mayor a 1 y se almacenan en una lista de diccionarios con el nombre de la columna, el valor duplicado y su frecuencia.
+</div>
+
+## Funciones necesarias
+<div class="normal">
+Las funciones que se usaron principalmente, son las siguientes:</div>
+
+**contar_duplicados_por_columna(df)**
+
+- Recorre cada columna con `df.columns`
+- Accede a los valores fila por fila usando `serie.iloc[i]`
+- Construye un diccionario `conteos` para acumular frecuencias manualmente
+- Retorna una lista de diccionarios con las claves `columna`, `valor` y `conteo`
+
+**Diccionario `conteos`**
+
+- Estructura auxiliar que mapea cada valor único de una columna a su número de apariciones.
+- Se reinicia en cada iteración de columna para evitar mezcla de datos entre columnas.
+
+**Lista `resultados`**
+
+- Acumula los hallazgos de todas las columnas.
+- Cada entrada es un diccionario con tres claves: `columna`, `valor` y `conteo`.
+
+## Estructura de la funcion 1
+
+```{python}
+#| echo: true
+def contar_duplicados_por_columna(df):
+    resultados = []
+    for col in df.columns:
+        conteos = {}
+        for valor in df[col].to_numpy():
+            if valor in conteos:
+                conteos[valor] += 1
+            else:
+                conteos[valor] = 1
+        for valor, conteo in conteos.items():
+            if conteo > 1:
+                resultados.append({"columna": col, "valor": valor, "conteo": conteo})
+    return resultados
+```
+
+## Estructura de la funcion 2
+
+```{python}
+porcentaje_por_columna = {}
+for nombre_col in df.columns:
+    columna = df[nombre_col]
+    total_en_col = len(columna)
+    faltantes_en_col = 0
+    for x in columna:
+        if x is None or (x != x):
+            faltantes_en_col += 1
+    porcentaje = 100.0 * faltantes_en_col / total_en_col
+    porcentaje_por_columna[nombre_col] = porcentaje
+
+print("Porcentaje de faltantes por columna:")
+for col, pct in cache["faltantes"].items():
+    print(f"{col}: {pct:.2f}%")
+```
+
+```{python}
+faltantes_por_columna = df.isnull().mean() * 100
+print("Porcentaje de datos faltantes por columna:")
+print(faltantes_por_columna)
+```
+
+## Imputación y Eliminación
+
+<div class="normal">
+
+**Código ISO del país y Nombre del país**
+
+Estas dos columnas presentaban un 99.94% de nulos respectivamente. Para determinar si estos nulos representaban ausencia real de dato o simplemente casos colombianos no registrados, se cruzaron los registros nulos con la columna `Nombre municipio`, obteniendo que el **99.98% correspondía a municipios colombianos** (Bogotá, Medellín, Cali, Barranquilla, etc.). Esto confirma que el sistema de registro del INS omitía el país cuando el paciente era colombiano, por lo que se imputaron con `COLOMBIA` y el código ISO `170`.
+
+**Nombre del grupo étnico**
+
+Presentaba un 98.69% de nulos. Dado que la columna `Pertenencia étnica` tiene apenas un 0.03% de nulos, se puede concluir que los registros sin grupo étnico simplemente corresponden a pacientes que **no pertenecen a ningún grupo étnico especial**, por lo que se imputó con `"NO PRESENTA"`.
+
+**Fecha de muerte**
+
+Esta columna tenía un 97.11% de nulos. Aunque inicialmente se asumió que los nulos representaban pacientes que no fallecieron, **no fue posible confirmar esta hipótesis** cruzándola con otra variable del dataset que lo certificara con certeza. Ante la imposibilidad de validar el supuesto y el alto volumen de datos faltantes, se tomó la decisión de **eliminar la columna** para evitar introducir sesgos en el análisis.
+
+```{python}
+pct_pais = (df[df["Nombre del país"].isna()]["Nombre municipio"].value_counts().sum() / len(df) * 100)
+pct_iso  = (df[df["Código ISO del país"].isna()]["Nombre municipio"].value_counts().sum() / len(df) * 100)
+
+print(f"Registros con 'Nombre del país' nulo con municipio colombiano: {pct_pais:.2f}%")
+print(f"Registros con 'Código ISO del país' nulo con municipio colombiano: {pct_iso:.2f}%")
+```
+
+</div>
+
+```{python}
+df["Código ISO del país"] = df["Código ISO del país"].fillna(170)
+df["Nombre del país"]     = df["Nombre del país"].fillna("COLOMBIA")
+df["Nombre del grupo étnico"] = df["Nombre del grupo étnico"].fillna("NO PRESENTA")
+df = df.drop(columns=["Fecha de muerte"], errors="ignore")
+```
+
+## Resultado
+
+```{python}
+faltantes_post = df.isnull().sum() / len(df) * 100
+print("Porcentaje de datos faltantes tras la imputación:")
+print(faltantes_post.sort_values(ascending=False).to_string())
+```
+
+:::
+# Gráficos
+
+:::{.panel-tabset}
+
+## Departamento
+```{python}
+#| echo: false
+#| output: false
+mpl.rcParams.update({
+    'figure.facecolor': 'white',
+    'axes.facecolor': '#f8f8ff',
+    'axes.edgecolor': '#cccccc',
+    'axes.grid': True,
+    'grid.color': '#e0e0e0',
+    'grid.linestyle': '--',
+    'grid.alpha': 0.7,
+    'font.family': 'sans-serif',
+})
+
+col = df['Nombre departamento'].str.strip().str.upper()
+freq_abs = col.value_counts()
+
+tabla = pd.DataFrame({
+    'Frecuencia Absoluta': freq_abs,
+    'Frecuencia Relativa (%)': (freq_abs / freq_abs.sum() * 100).round(2),
+    'Frecuencia Acumulada': freq_abs.cumsum(),
+    'Frecuencia Relativa Acumulada (%)': (freq_abs / freq_abs.sum() * 100).cumsum().round(2)
+})
+_ = None
+```
+```{python}
+#| echo: false
+#| fig-width: 11
+#| fig-height: 8
+plt.close('all')
+fig, ax = plt.subplots(figsize=(11, 8))
+ax.barh(freq_abs.index, freq_abs.values,
+        color='#4242cb', edgecolor='white', linewidth=0.5)
+_ = ax.set_title('Gráfico 1. Distribución por Departamento',
+             fontsize=14, fontweight='bold', pad=15)
+_ = ax.set_ylabel('Departamento', fontsize=11)
+_ = ax.set_xlabel('Frecuencia', fontsize=11)
+ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{int(x):,}'))
+ax.invert_yaxis()
+_ = None
+```
+```{python}
+#| label: grafico-departamento
+plt.tight_layout()
+plt.show()
+plt.close(fig)
+```
+```{python}
+#| label: tabla-departamento
+tabla.index.name = 'Departamento'
+display(tabla)
+```
+
+## Municipio
+```{python}
+#| echo: false
+#| output: false
+col = df['Nombre municipio'].str.strip().str.upper()
+freq = col.value_counts()
+principales = freq[freq >= 10000]
+otros = freq[freq < 10000].sum()
+freq_final = principales.copy()
+freq_final['OTROS'] = otros
+total = freq_final.sum()
+
+tabla = pd.DataFrame({
+    'Frecuencia Absoluta': freq_final,
+    'Frecuencia Relativa (%)': (freq_final / total * 100).round(2),
+    'Frecuencia Acumulada': freq_final.cumsum(),
+    'Frecuencia Relativa Acumulada (%)': (freq_final / total * 100).cumsum().round(2)
+})
+_ = None
+```
+```{python}
+#| echo: false
+#| fig-width: 11
+#| fig-height: 8
+fig, ax = plt.subplots(figsize=(11, 8))
+ax.barh(freq_final.index, freq_final.values,
+        color='#4242cb', edgecolor='white', linewidth=0.5)
+_ = ax.set_title('Gráfico 2. Distribución por Municipio',
+             fontsize=14, fontweight='bold', pad=15)
+_ = ax.set_ylabel('Municipio', fontsize=11)
+_ = ax.set_xlabel('Frecuencia', fontsize=11)
+ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{int(x):,}'))
+ax.invert_yaxis()
+_ = None
+```
+```{python}
+#| label: grafico-municipio
+plt.tight_layout()
+plt.show()
+plt.close(fig)
+```
+```{python}
+#| label: tabla-municipio
+tabla.index.name = 'Nombre municipio'
+display(tabla)
+```
+
+## Sexo
+```{python}
+#| echo: false
+#| output: false
+col = df['Sexo'].str.strip().str.upper()
+freq_abs = col.value_counts()
+
+tabla = pd.DataFrame({
+    'Frecuencia Absoluta': freq_abs,
+    'Frecuencia Relativa (%)': (freq_abs / freq_abs.sum() * 100).round(2),
+    'Frecuencia Acumulada': freq_abs.cumsum(),
+    'Frecuencia Relativa Acumulada (%)': (freq_abs / freq_abs.sum() * 100).cumsum().round(2)
+})
+_ = None
+```
+```{python}
+#| echo: false
+#| fig-width: 11
+#| fig-height: 4
+plt.close('all')
+fig, ax = plt.subplots(figsize=(11, 4))
+ax.barh(freq_abs.index, freq_abs.values,
+        color='#9c3ddc', edgecolor='white', linewidth=0.5)
+_ = ax.set_title('Gráfico 3. Distribución por Sexo',
+             fontsize=14, fontweight='bold', pad=15)
+_ = ax.set_ylabel('Sexo', fontsize=11)
+_ = ax.set_xlabel('Frecuencia', fontsize=11)
+ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{int(x):,}'))
+ax.invert_yaxis()
+_ = None
+```
+```{python}
+#| label: grafico-sexo
+plt.tight_layout()
+plt.show()
+plt.close(fig)
+```
+```{python}
+#| label: tabla-sexo
+tabla.index.name = 'Sexo'
+display(tabla)
+```
+
+## Tipo de contagio
+```{python}
+#| echo: false
+#| output: false
+col = df['Tipo de contagio'].str.strip().str.upper()
+freq_abs = col.value_counts()
+
+tabla = pd.DataFrame({
+    'Frecuencia Absoluta': freq_abs,
+    'Frecuencia Relativa (%)': (freq_abs / freq_abs.sum() * 100).round(2),
+    'Frecuencia Acumulada': freq_abs.cumsum(),
+    'Frecuencia Relativa Acumulada (%)': (freq_abs / freq_abs.sum() * 100).cumsum().round(2)
+})
+_ = None
+```
+```{python}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 6
+fig, ax = plt.subplots(figsize=(8, 6))
+colors = ['#4242cb', '#9c3ddc', '#1583dd', '#26eb4d', '#141482']
+wedges, texts, autotexts = ax.pie(
+    freq_abs,
+    labels=freq_abs.index,
+    explode=[0.05] * len(freq_abs),
+    autopct='%1.1f%%',
+    colors=colors[:len(freq_abs)],
+    startangle=140
+)
+for at in autotexts:
+    at.set_fontsize(10)
+    at.set_fontweight('bold')
+_ = ax.set_title('Gráfico 4. Distribución de Tipo de contagio',
+             fontsize=14, fontweight='bold', pad=15)
+_ = ax.set_aspect('equal')
+```
+```{python}
+#| label: grafico-contagio
+plt.tight_layout()
+plt.show()
+plt.close(fig)
+```
+```{python}
+#| label: tabla-contagio
+tabla.index.name = 'Tipo de contagio'
+display(tabla)
+```
+
+## Ubicación del caso
+```{python}
+#| echo: false
+#| output: false
+col = df['Ubicación del caso'].str.strip().str.upper()
+freq_abs = col.value_counts()
+
+tabla = pd.DataFrame({
+    'Frecuencia Absoluta': freq_abs,
+    'Frecuencia Relativa (%)': (freq_abs / freq_abs.sum() * 100).round(2),
+    'Frecuencia Acumulada': freq_abs.cumsum(),
+    'Frecuencia Relativa Acumulada (%)': (freq_abs / freq_abs.sum() * 100).cumsum().round(2)
+})
+_ = None
+```
+```{python}
+#| echo: false
+#| fig-width: 11
+#| fig-height: 5
+fig, ax = plt.subplots(figsize=(11, 5))
+ax.barh(freq_abs.index, freq_abs.values,
+        color='#1583dd', edgecolor='white', linewidth=0.5)
+_ = ax.set_title('Gráfico 5. Distribución por Ubicación del caso',
+             fontsize=14, fontweight='bold', pad=15)
+_ = ax.set_ylabel('Ubicación del caso', fontsize=11)
+_ = ax.set_xlabel('Frecuencia', fontsize=11)
+ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{int(x):,}'))
+ax.invert_yaxis()
+_ = None
+```
+```{python}
+#| label: grafico-ubicacion
+plt.tight_layout()
+plt.show()
+plt.close(fig)
+```
+```{python}
+#| label: tabla-ubicacion
+tabla.index.name = 'Ubicación del caso'
+display(tabla)
+```
+
+## Estado
+```{python}
+#| echo: false
+#| output: false
+col = df['Estado'].str.strip().str.upper()
+freq_abs = col.value_counts()
+
+tabla = pd.DataFrame({
+    'Frecuencia Absoluta': freq_abs,
+    'Frecuencia Relativa (%)': (freq_abs / freq_abs.sum() * 100).round(2),
+    'Frecuencia Acumulada': freq_abs.cumsum(),
+    'Frecuencia Relativa Acumulada (%)': (freq_abs / freq_abs.sum() * 100).cumsum().round(2)
+})
+_ = None
+```
+```{python}
+#| echo: false
+#| fig-width: 11
+#| fig-height: 5
+fig, ax = plt.subplots(figsize=(11, 5))
+ax.barh(freq_abs.index, freq_abs.values,
+        color='#4242cb', edgecolor='white', linewidth=0.5)
+_ = ax.set_title('Gráfico 6. Distribución por Estado',
+             fontsize=14, fontweight='bold', pad=15)
+_ = ax.set_ylabel('Estado', fontsize=11)
+_ = ax.set_xlabel('Frecuencia', fontsize=11)
+ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{int(x):,}'))
+ax.invert_yaxis()
+_ = None
+```
+```{python}
+#| label: grafico-estado
+plt.tight_layout()
+plt.show()
+plt.close(fig)
+```
+```{python}
+#| label: tabla-estado
+tabla.index.name = 'Estado'
+display(tabla)
+```
+
+## País
+```{python}
+#| echo: false
+#| output: false
+import numpy as np
+
+col = df['Nombre del país'].str.strip().str.upper()
+freq = col.value_counts()
+principales = freq[freq >= 25]
+otros = freq[freq < 25].sum()
+freq_final = principales.copy()
+freq_final['OTROS'] = otros
+total = freq_final.sum()
+
+tabla = pd.DataFrame({
+    'Frecuencia Absoluta': freq_final,
+    'Frecuencia Relativa (%)': (freq_final / total * 100).round(2),
+    'Frecuencia Acumulada': freq_final.cumsum(),
+    'Frecuencia Relativa Acumulada (%)': (freq_final / total * 100).cumsum().round(2)
+})
+_ = None
+```
+```{python}
+#| echo: false
+#| fig-width: 11
+#| fig-height: 8
+fig, ax = plt.subplots(figsize=(11, 8))
+ax.barh(freq_final.index, freq_final.values,
+        color='#9c3ddc', edgecolor='white', linewidth=0.5)
+_ = ax.set_title('Gráfico 7. Distribución por Nombre del país',
+             fontsize=14, fontweight='bold', pad=15)
+_ = ax.set_ylabel('Nombre del país', fontsize=11)
+_ = ax.set_xlabel('Frecuencia', fontsize=11)
+ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{int(x):,}'))
+ax.invert_yaxis()
+_ = None
+```
+```{python}
+#| label: grafico-pais
+plt.tight_layout()
+plt.show()
+plt.close(fig)
+```
+```{python}
+#| label: tabla-pais
+tabla.index.name = 'Nombre del país'
+display(tabla)
+```
+
+## Recuperado
+```{python}
+#| echo: false
+#| output: false
+col = df['Recuperado'].str.strip().str.upper()
+freq_abs = col.value_counts()
+
+tabla = pd.DataFrame({
+    'Frecuencia Absoluta': freq_abs,
+    'Frecuencia Relativa (%)': (freq_abs / freq_abs.sum() * 100).round(2),
+    'Frecuencia Acumulada': freq_abs.cumsum(),
+    'Frecuencia Relativa Acumulada (%)': (freq_abs / freq_abs.sum() * 100).cumsum().round(2)
+})
+```
+```{python}
+#| echo: false
+#| fig-width: 11
+#| fig-height: 5
+fig, ax = plt.subplots(figsize=(11, 5))
+ax.barh(freq_abs.index, freq_abs.values,
+        color='#26eb4d', edgecolor='white', linewidth=0.5)
+_ = ax.set_title('Gráfico 8. Distribución por estado de Recuperado',
+             fontsize=14, fontweight='bold', pad=15)
+_ = ax.set_ylabel('Recuperados', fontsize=11)
+_ = ax.set_xlabel('Frecuencia', fontsize=11)
+ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{int(x):,}'))
+ax.invert_yaxis()
+```
+```{python}
+#| label: grafico-recuperado
+plt.tight_layout()
+plt.show()
+plt.close(fig)
+```
+```{python}
+#| label: tabla-recuperado
+tabla.index.name = 'Recuperado'
+display(tabla)
+```
+
+## Tipo de recuperación
+```{python}
+#| echo: false
+#| output: false
+col = df['Tipo de recuperación'].str.strip().str.upper()
+freq_abs = col.value_counts()
+
+tabla = pd.DataFrame({
+    'Frecuencia Absoluta': freq_abs,
+    'Frecuencia Relativa (%)': (freq_abs / freq_abs.sum() * 100).round(2),
+    'Frecuencia Acumulada': freq_abs.cumsum(),
+    'Frecuencia Relativa Acumulada (%)': (freq_abs / freq_abs.sum() * 100).cumsum().round(2)
+})
+```
+```{python}
+#| echo: false
+#| fig-width: 11
+#| fig-height: 4
+fig, ax = plt.subplots(figsize=(11, 4))
+ax.barh(freq_abs.index, freq_abs.values,
+        color='#1583dd', edgecolor='white', linewidth=0.5)
+_ = ax.set_title('Gráfico 9. Distribución por Tipo de recuperación',
+             fontsize=14, fontweight='bold', pad=15)
+_ = ax.set_ylabel('Tipo de recuperación', fontsize=11)
+_ = ax.set_xlabel('Frecuencia', fontsize=11)
+ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{int(x):,}'))
+ax.invert_yaxis()
+```
+```{python}
+#| label: grafico-recuperacion
+plt.tight_layout()
+plt.show()
+plt.close(fig)
+```
+```{python}
+#| label: tabla-recuperacion
+tabla.index.name = 'Tipo de recuperación'
+display(tabla)
+```
+
+## Grupo étnico
+```{python}
+#| echo: false
+#| output: false
+col = df['Nombre del grupo étnico'].str.strip().str.upper()
+freq = col.value_counts()
+principales = freq[freq >= 100]
+otros = freq[freq < 100].sum()
+freq_final = principales.copy()
+freq_final['OTROS'] = otros
+total = freq_final.sum()
+
+tabla = pd.DataFrame({
+    'Frecuencia Absoluta': freq_final,
+    'Frecuencia Relativa (%)': (freq_final / total * 100).round(2),
+    'Frecuencia Acumulada': freq_final.cumsum(),
+    'Frecuencia Relativa Acumulada (%)': (freq_final / total * 100).cumsum().round(2)
+})
+```
+```{python}
+#| echo: false
+#| fig-width: 11
+#| fig-height: 6
+fig, ax = plt.subplots(figsize=(11, 6))
+ax.barh(freq_final.index, freq_final.values,
+        color='#4242cb', edgecolor='white', linewidth=0.5)
+_ = ax.set_title('Gráfico 10. Distribución por Grupo étnico',
+             fontsize=14, fontweight='bold', pad=15)
+_ = ax.set_ylabel('Nombre del grupo étnico', fontsize=11)
+_ = ax.set_xlabel('Frecuencia', fontsize=11)
+ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{int(x):,}'))
+ax.invert_yaxis()
+```
+```{python}
+#| label: grafico-etnico
+plt.tight_layout()
+plt.show()
+plt.close(fig)
+```
+```{python}
+#| label: tabla-etnico
+tabla.index.name = 'Nombre del grupo étnico'
+display(tabla)
+```
+
+:::
