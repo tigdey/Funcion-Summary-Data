@@ -1,12 +1,9 @@
 # Funcion-Summary-Data
 En este proyecto decidimos trabajar con un dataset de libre acceso el cual almacena datos sobre los contagios de covid 19, nuestra idea en este proyecto fue crear una funcion que muestre informacion valiosa de este y cualquier otro dataset que se use.
 
-## Requisitos
+## Requisitos del sistema
 - Python 3.x
-- pandas
-- numpy
-- matplotlib
-- quarto
+- [Quarto](https://quarto.org/docs/get-started/)
 
 ## Instalacion:
 - git clone https://github.com/tigdey/Funcion-Summary-Data
