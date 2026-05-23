@@ -13,7 +13,7 @@ import matplotlib as mpl
 from IPython.display import display
 import pickle, os
 
-df = pd.read_csv("Casos_positivos_de_COVID-19_en_Colombia._20260227.csv", sep=(","), nrows= 10000)
+df = pd.read_csv("datos_limpios.csv", sep=(","))
 
 
 df["Código ISO del país"] = df["Código ISO del país"].astype(float)
