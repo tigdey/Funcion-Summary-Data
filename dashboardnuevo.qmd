@@ -44,10 +44,11 @@ df["Fecha de recuperación"] = pd.to_datetime(df["Fecha de recuperación"])
 df["Tipo de recuperación"] = df["Tipo de recuperación"].astype(object)
 df["Nombre del grupo étnico"] = df["Nombre del grupo étnico"].astype(object)
 
-
 ```
 
-
+```{python}
+df["Pertenencia étnica"].isna
+```
 ```{python}
 def contar_duplicados_por_columna(df):
     resultados = []
@@ -921,12 +922,6 @@ for col, pct in cache["faltantes"].items():
     print(f"{col}: {pct:.2f}%")
 ```
 
-```{python}
-faltantes_por_columna = df.isnull().mean() * 100
-print("Porcentaje de datos faltantes por columna:")
-print(faltantes_por_columna)
-```
-
 ## Imputación y Eliminación
 
 <div class="normal">
@@ -937,7 +932,7 @@ Estas dos columnas presentaban un 99.94% de nulos respectivamente. Para determin
 
 **Nombre del grupo étnico**
 
-Presentaba un 98.69% de nulos. Dado que la columna `Pertenencia étnica` tiene apenas un 0.03% de nulos, se puede concluir que los registros sin grupo étnico simplemente corresponden a pacientes que **no pertenecen a ningún grupo étnico especial**, por lo que se imputó con `"NO PRESENTA"`.
+Presentaba un 98.69% de nulo y dado que no pudimos relacionar la columna con ninguna otra decidimos que la mejor opcion era e**liminar la columna** para evitar sesgos en el analisis
 
 **Fecha de muerte**
 
@@ -956,7 +951,7 @@ print(f"Registros con 'Código ISO del país' nulo con municipio colombiano: {pc
 ```{python}
 df["Código ISO del país"] = df["Código ISO del país"].fillna(170)
 df["Nombre del país"]     = df["Nombre del país"].fillna("COLOMBIA")
-df["Nombre del grupo étnico"] = df["Nombre del grupo étnico"].fillna("NO PRESENTA")
+df = df.drop(columns=["Nombre del grupo étnico"], errors="ignore")
 df = df.drop(columns=["Fecha de muerte"], errors="ignore")
 ```
 
@@ -1424,3 +1419,9 @@ display(tabla)
 ```
 
 :::
+
+
+#```{python}
+#df.to_csv("datos_limpios.csv", index=False)
+#print("CSV generado exitosamente")
+#```
