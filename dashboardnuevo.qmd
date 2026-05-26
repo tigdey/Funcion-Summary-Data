@@ -46,9 +46,7 @@ df["Nombre del grupo étnico"] = df["Nombre del grupo étnico"].astype(object)
 
 ```
 
-```{python}
-df["Pertenencia étnica"].isna
-```
+
 ```{python}
 def contar_duplicados_por_columna(df):
     resultados = []
@@ -172,7 +170,7 @@ display(info_df)
 #| echo: true
 def summary_data(
         df,
-        metric: "list | str" = ["mean", "mode", "median", "std", "var", "min", "max", "quantiles", "count", "NaN"],
+        metric: "list | str" = ["mean", "mode", "median", "std", "var", "min", "max", "quantiles", "count", "NaN", "kurtosis", "skewness", "missing_pct", "duplicates"],
         return_str: bool = True,
         return_metrics: bool = False,
         decimals: int = 2,
@@ -196,6 +194,84 @@ def summary_data(
     numericas = df.select_dtypes(include=["number"]).columns
     categoricas = df.select_dtypes(include=["object"]).columns
 
+    # Funciones auxiliares internas
+    def confSerie(serie):
+        if isinstance(serie, np.ndarray):  # si ya es numpy, devolver directo
+            return serie
+        if not pd.api.types.is_numeric_dtype(serie):
+            raise TypeError("La serie debe contener solo valores numéricos (sin letras ni otros tipos)")
+        return serie.dropna().to_numpy()
+
+    def count(serie):
+        arr = confSerie(serie)
+        return int(len(arr)) # cambio por optimizacion
+
+    def mean(serie):
+        arr = confSerie(serie)
+        n = len(arr)
+        suma = 0.0
+        for x in arr:        #cambio por optimizacion iterar directo sobre numpy es más rápido que serie[i]
+            suma += x
+        return suma / n
+
+    def std(serie):
+        arr = confSerie(serie)
+        n = len(arr)
+        if n < 2:
+            return 0.0
+        temp_mean = mean(serie)
+        suma = 0.0
+        for x in arr:
+            suma += (x - temp_mean) ** 2
+        return (suma / (n - 1)) ** 0.5
+
+    def kurtosis(serie):
+        arr = confSerie(serie)
+        n = len(arr)
+        if n < 4:
+            return float('nan')
+        temp_mean = mean(arr)   # ← pasar arr, no serie
+        temp_std = std(arr)     # ← pasar arr, no serie
+        if temp_std == 0:
+            return float('nan')
+        suma = 0.0
+        for x in arr:
+            suma += ((x - temp_mean) / temp_std) ** 4
+        term1 = (n * (n + 1)) / ((n - 1) * (n - 2) * (n - 3))
+        term3 = (3 * (n - 1) ** 2) / ((n - 2) * (n - 3))
+        return (term1 * suma) - term3
+
+    def coesimetria(serie):
+        arr = confSerie(serie)
+        n = len(arr)
+        if n < 3:
+            return float('nan')
+        temp_mean = mean(arr)   # ← pasar arr, no serie
+        temp_std = std(arr)     # ← pasar arr, no serie
+        if temp_std == 0:
+            return float('nan')
+        suma = 0.0
+        for x in arr:
+            suma += ((x - temp_mean) / temp_std) ** 3
+        return (n / ((n - 1) * (n - 2))) * suma
+
+    def missing_pct(serie):
+        total = len(serie)
+        faltantes = 0
+        for x in serie:
+            if x is None or (x != x):
+                faltantes += 1
+        return round(100.0 * faltantes / total, decimals)
+
+    def duplicates(col_data):
+        conteos = {}
+        for valor in col_data:
+            if valor in conteos:
+                conteos[valor] += 1
+            else:
+                conteos[valor] = 1
+        return {v: c for v, c in conteos.items() if c > 1}
+
     # Media
     if "mean" in metric:
         mean_variables = []
@@ -203,9 +279,9 @@ def summary_data(
         for col in numericas:
 
             ## Media por columna
-            mean = float(round(df[col].sum() / len(df[col]), decimals))
+            mean_val = float(round(df[col].sum() / len(df[col]), decimals))
 
-            mean_variables.append((col, mean))
+            mean_variables.append((col, mean_val))
 
         dic_metricas["mean"] = mean_variables
     
@@ -324,6 +400,42 @@ def summary_data(
 
         dic_metricas["NaN"] = nan_variables
 
+    # Curtosis
+    if "kurtosis" in metric:
+        kurtosis_variables = []
+
+        for col in numericas:
+            kurtosis_variables.append((col, round(kurtosis(df[col]), decimals)))
+
+        dic_metricas["kurtosis"] = kurtosis_variables
+
+    # Coeficiente de asimetria
+    if "skewness" in metric:
+        skewness_variables = []
+
+        for col in numericas:
+            skewness_variables.append((col, round(coesimetria(df[col]), decimals)))
+
+        dic_metricas["skewness"] = skewness_variables
+
+    # Porcentaje de datos faltantes
+    if "missing_pct" in metric:
+        missing_variables = []
+
+        for col in columnas:
+            missing_variables.append((col, missing_pct(df[col])))
+
+        dic_metricas["missing_pct"] = missing_variables
+
+    # Duplicados por columna
+    if "duplicates" in metric:
+        duplicates_variables = []
+
+        for col in columnas:
+            duplicates_variables.append((col, duplicates(df[col].to_numpy())))
+
+        dic_metricas["duplicates"] = duplicates_variables
+
     # Formato de salida
     if return_str:
         print("*" * 120)
@@ -350,8 +462,10 @@ def summary_data(
         return dic_metricas
 
 
-summary_data(df, metric=["mean", "median", "mode", "count", "quantiles","min", "max", "NaN", "var", "std"], 
-                decimals=2, return_metrics=False, return_str=True)
+summary_data(df, metric=["mean", "median", "std", "var", "min", "max",
+                          "quantiles", "count", "NaN", "mode",
+                          "kurtosis", "skewness", "missing_pct", "duplicates"],
+             decimals=2, return_str=True)
 ```
 
 :::
@@ -963,6 +1077,7 @@ print("Porcentaje de datos faltantes tras la imputación:")
 print(faltantes_post.sort_values(ascending=False).to_string())
 ```
 
+
 :::
 # Gráficos
 
@@ -1373,55 +1488,23 @@ tabla.index.name = 'Tipo de recuperación'
 display(tabla)
 ```
 
-## Grupo étnico
-```{python}
-#| echo: false
-#| output: false
-col = df['Nombre del grupo étnico'].str.strip().str.upper()
-freq = col.value_counts()
-principales = freq[freq >= 100]
-otros = freq[freq < 100].sum()
-freq_final = principales.copy()
-freq_final['OTROS'] = otros
-total = freq_final.sum()
-
-tabla = pd.DataFrame({
-    'Frecuencia Absoluta': freq_final,
-    'Frecuencia Relativa (%)': (freq_final / total * 100).round(2),
-    'Frecuencia Acumulada': freq_final.cumsum(),
-    'Frecuencia Relativa Acumulada (%)': (freq_final / total * 100).cumsum().round(2)
-})
-```
-```{python}
-#| echo: false
-#| fig-width: 11
-#| fig-height: 6
-fig, ax = plt.subplots(figsize=(11, 6))
-ax.barh(freq_final.index, freq_final.values,
-        color='#4242cb', edgecolor='white', linewidth=0.5)
-_ = ax.set_title('Gráfico 10. Distribución por Grupo étnico',
-             fontsize=14, fontweight='bold', pad=15)
-_ = ax.set_ylabel('Nombre del grupo étnico', fontsize=11)
-_ = ax.set_xlabel('Frecuencia', fontsize=11)
-ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{int(x):,}'))
-ax.invert_yaxis()
-```
-```{python}
-#| label: grafico-etnico
-plt.tight_layout()
-plt.show()
-plt.close(fig)
-```
-```{python}
-#| label: tabla-etnico
-tabla.index.name = 'Nombre del grupo étnico'
-display(tabla)
-```
-
 :::
+# Conclusion
 
+:::{.panel-tabset}
+## Conclusiones
 
-#```{python}
-#df.to_csv("datos_limpios.csv", index=False)
-#print("CSV generado exitosamente")
-#```
+<div class="normal">
+
+La función desarrollada demostró ser una herramienta eficiente para obtener de forma rápida y general información estadística relevante de un dataset. Permite calcular medidas como media, mediana, moda, varianza, desviación estándar, cuantiles, curtosis y coeficiente de variación, facilitando un análisis completo sin necesidad de escribir grandes cantidades de código.
+
+Además, la herramienta aporta un valor importante al análisis de datos al incluir la detección de valores nulos y filas repetidas, lo que permite evaluar el estado general de la base de datos antes de realizar interpretaciones. Esto mejora la calidad del análisis y ayuda a identificar posibles problemas estructurales en la información.
+
+En términos de estructura y funcionamiento, la función presenta una buena organización y una precisión adecuada en los resultados obtenidos. La base de datos utilizada también mostró ser óptima para su aplicación, aunque requirió algunos ajustes en la estructura y en la asignación de tipos de datos para su correcto procesamiento.
+
+Uno de los principales aportes de esta herramienta es que permite a los usuarios obtener información valiosa de manera más intuitiva, rápida y sencilla en comparación con el uso directo de pandas, reduciendo la complejidad del código y facilitando el trabajo de análisis estadístico.
+
+Finalmente, el análisis de la data permitió observar el comportamiento de personas afectadas por el COVID-19, clasificadas como pacientes enfermos, junto con variables relacionadas con su evolución. Se evidenció que la mayoría presentaba síntomas leves y tendía a recuperarse con el tiempo, más que por intervención directa de pruebas como PCR o procesos de vacunación en los datos analizados. Esto permitió obtener una visión general del transcurso de la enfermedad dentro del conjunto de datos.
+
+</div>
+:::
