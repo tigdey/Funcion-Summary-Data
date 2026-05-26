@@ -13,3 +13,6 @@ En este proyecto decidimos trabajar con un dataset de libre acceso el cual almac
 ## Ejecucion
 quarto render dashboardnuevo.qmd
 
+## Link de la libreria
+
+https://pypi.org/project/sciencelabx/
