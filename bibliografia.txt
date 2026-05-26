@@ -1,0 +1,50 @@
+Bibliografia 
+
+Datos: 
+
+Los datos en su totalidad fueron tomados de:  
+
+https://www.datos.gov.co/Salud-y-Protecci-n-Social/Casos-positivos-de-COVID-19-en-Colombia-/gt2j-8ykr/about_data 
+
+ 
+
+Formulas matematicas:  
+
+La fórmula matemática utilizada para el cálculo de la media aritmética fue tomada del libro Descriptive Statistics for Scientists and Engineers: Applications in R, escrito por Rajan Chattamvelli y Ramalingam Shanmugam, publicado por Springer Nature en el año 2023. 
+Tomado de: 
+Descriptive Statistics for Scientists and Engineers  
+
+ 
+
+La fórmula utilizada para el cálculo de la mediana fue tomada del libro Statistical Methods: An Introduction to Basic Statistical Concepts and Analysis, escrito por Cheryl Ann Willard y publicado por CRC Press en su segunda edición del año 2020.  
+Statistical Methods  
+
+ 
+
+La fórmula empleada para el cálculo de la varianza fue tomada del libro Descriptive Statistics for Scientists and Engineers: Applications in R, escrito por Rajan Chattamvelli y Ramalingam Shanmugam, publicado por Springer Nature en el año 2023. 
+Tomado de: 
+Descriptive Statistics for Scientists and Engineers  
+
+ 
+
+La fórmula matemática utilizada para el cálculo de la desviación estándar fue tomada del libro Statistics for Business and Economics, escrito por R. P. Hooda y publicado por Vikas Publishing en su sexta edición del año 2025. 
+Tomado de: 
+Statistics for Business and Economics  
+
+ 
+
+La metodología utilizada para el cálculo de los cuantiles fue tomada del artículo científico Sample Quantiles in Statistical Packages, escrito por Rob J. Hyndman y Yanan Fan, publicado en The American Statistician. 
+Tomado de: 
+Sample Quantiles in Statistical Packages  
+
+ 
+
+La fórmula empleada para el cálculo de la curtosis fue tomada del libro Descriptive Statistics for Scientists and Engineers: Applications in R, escrito por Rajan Chattamvelli y Ramalingam Shanmugam, publicado por Springer Nature en el año 2023.  
+Tomado de: 
+Descriptive Statistics for Scientists and Engineers  
+
+ 
+
+La fórmula utilizada para el cálculo del coeficiente de asimetría fue tomada del libro Descriptive Statistics for Scientists and Engineers: Applications in R, escrito por Rajan Chattamvelli y Ramalingam Shanmugam, publicado por Springer Nature en el año 2023. 
+Tomado de: 
+Descriptive Statistics for Scientists and Engineers 
